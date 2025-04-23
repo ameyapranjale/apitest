@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Tester</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    textarea, input, select {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    pre {
+      background-color: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h2>API Tester</h2>
+
+  <label>API URL</label>
+  <input type="text" id="url" placeholder="https://example.com/api" />
+
+  <label>Method</label>
+  <select id="method">
+    <option>GET</option>
+    <option>POST</option>
+    <option>PUT</option>
+    <option>DELETE</option>
+  </select>
+
+  <label>Headers (Key: Value per line)</label>
+  <textarea id="headers" placeholder="Content-Type: application/json\nAuthorization: Bearer xyz"></textarea>
+
+  <label>Request Body (JSON)</label>
+  <textarea id="body" placeholder='{"key": "value"}'></textarea>
+
+  <button onclick="sendRequest()">Send Request</button>
+
+  <h3>Response:</h3>
+  <pre id="response"></pre>
+
+  <script>
+    function parseHeaders(headerString) {
+      const headers = {};
+      const lines = headerString.split('\n');
+      for (const line of lines) {
+        const [key, ...rest] = line.split(':');
+        if (key && rest.length) {
+          headers[key.trim()] = rest.join(':').trim();
+        }
+      }
+      return headers;
+    }
+
+    async function sendRequest() {
+      const url = document.getElementById('url').value;
+      const method = document.getElementById('method').value;
+      const headersInput = document.getElementById('headers').value;
+      const body = document.getElementById('body').value;
+
+      const headers = parseHeaders(headersInput);
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: method === 'GET' || method === 'DELETE' ? null : body
+        });
+
+        const contentType = res.headers.get("content-type");
+        let result;
+        if (contentType && contentType.includes("application/json")) {
+          result = await res.json();
+          document.getElementById('response').textContent = JSON.stringify(result, null, 2);
+        } else {
+          result = await res.text();
+          document.getElementById('response').textContent = result;
+        }
+      } catch (err) {
+        document.getElementById('response').textContent = 'Error: ' + err.message;
+      }
+    }
+  </script>
+</body>
+</html>
